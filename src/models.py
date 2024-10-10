@@ -84,7 +84,7 @@ class Favorites(db.Model):
         return {
             "id": self.id,
             "name": self.name,
-            "category": "character" if self.character else "planet",
+            "category": self.category,
             "user_id": self.user_id,
             # "character_id": self.character_id,
             "character": self.character.serialize() if self.character else None,

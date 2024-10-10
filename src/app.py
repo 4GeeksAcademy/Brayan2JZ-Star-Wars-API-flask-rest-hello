@@ -52,7 +52,7 @@ def get_all_users():
 
     return jsonify(all_users), 200
 
-@app.route('/people', methods=['GET'])
+@app.route('/', methods=['GET'])
 def get_people():
     people=Character.query.all()
     serialized_people=[person.serialize() for person in people]
@@ -108,7 +108,7 @@ def add_fav_character(people_id):
     if character is None:
         raise APIException("Character Not Found", status_code=404)
     
-    favorite=Favorites(name=character.name, user_id=user_id, character_id=people_id)
+    favorite=Favorites(name=character.name, user_id=user_id, character_id=people_id, category="Character")
     db.session.add(favorite)
     db.session.commit()
 
@@ -127,7 +127,7 @@ def add_fav_planet(planet_id):
     if planet is None:
         raise APIException("planet Not Found", status_code=404)
     
-    favorite=Favorites(name=planet.name, user_id=user_id, planet_id=planet_id)
+    favorite=Favorites(name=planet.name, user_id=user_id, planet_id=planet_id, category="Planet")
     db.session.add(favorite)
     db.session.commit()
 
@@ -140,6 +140,8 @@ def delete_fav_character(people_id):
         raise APIException("Please provide User ID", status_code=404)
     
     favorite=Favorites.query.filter_by(user_id=user_id, character_id=people_id).first()
+    if favorite is None:
+        raise APIException("Person not found", status_code=404)
     db.session.delete(favorite)
     db.session.commit()
 
@@ -152,6 +154,8 @@ def delete_fav_planet(planet_id):
         raise APIException("Please provide User ID", status_code=404)
     
     favorite=Favorites.query.filter_by(user_id=user_id, planet_id=planet_id).first()
+    if favorite is None:
+        raise APIException("Planet not found", status_code=404)
     db.session.delete(favorite)
     db.session.commit()
 
