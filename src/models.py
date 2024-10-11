@@ -86,9 +86,7 @@ class Favorites(db.Model):
             "name": self.name,
             "category": self.category,
             "user_id": self.user_id,
-            # "character_id": self.character_id,
             "character": self.character.serialize() if self.character else None,
-            # "planet_id": self.planet_id
             "planet": self.planet.serialize() if self.planet else None
             # do not serialize the password, its a security breach
         }

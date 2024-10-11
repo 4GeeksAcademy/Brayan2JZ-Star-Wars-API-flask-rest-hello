@@ -82,33 +82,38 @@ def get_planet(planet_id):
 
 @app.route('/users/favorites', methods=['GET'])
 def list_user_favorites():
-    user_id=request.args.get("user_id")
-    if user_id is None:
-        raise APIException("Please provide User ID", status_code=404)
-    user=User.query.get(user_id)
+    username=request.args.get("username")
+    if username is None:
+        raise APIException("Please provide Username", status_code=404)
+    user=User.query.filter_by(username=username).first()
     if user is None:
         raise APIException("User not found", status_code=404)
     
 
-    favorites=Favorites.query.filter_by(user_id=user_id).all()
+    favorites=Favorites.query.filter_by(user_id=user.id).all()
     serialized_favorites=[favorite.serialize() for favorite in favorites]
 
     return jsonify(serialized_favorites), 200
 
 @app.route('/favorite/people/<int:people_id>', methods=['POST'])
 def add_fav_character(people_id):
-    user_id=request.args.get("user_id")
-    if user_id is None:
-        raise APIException("Please provide User ID", status_code=404)
-    user=User.query.get(user_id)
+    username=request.args.get("username")
+    password=request.args.get("password")
+    if username is None or password is None:
+        raise APIException("Please provide Username and Password", status_code=404)
+    
+    user=User.query.filter_by(username=username).first()
     if user is None:
         raise APIException("User not found", status_code=404)
+    
+    if user.password != password:
+        raise APIException("Password incorrect", status_code=404)
     
     character=Character.query.get(people_id)
     if character is None:
         raise APIException("Character Not Found", status_code=404)
     
-    favorite=Favorites(name=character.name, user_id=user_id, character_id=people_id, category="Character")
+    favorite=Favorites(name=character.name, user_id=user.id, character_id=people_id, category="Character")
     db.session.add(favorite)
     db.session.commit()
 
@@ -116,18 +121,23 @@ def add_fav_character(people_id):
 
 @app.route('/favorite/planet/<int:planet_id>', methods=['POST'])
 def add_fav_planet(planet_id):
-    user_id=request.args.get("user_id")
-    if user_id is None:
-        raise APIException("Please provide User ID", status_code=404)
-    user=User.query.get(user_id)
+    username=request.args.get("username")
+    password=request.args.get("password")
+    if username is None or password is None:
+        raise APIException("Please provide Username and Password", status_code=404)
+    
+    user=User.query.filter_by(username=username).first()
     if user is None:
         raise APIException("User not found", status_code=404)
+    
+    if user.password != password:
+        raise APIException("Password incorrect", status_code=404)
     
     planet=Planet.query.get(planet_id)
     if planet is None:
         raise APIException("planet Not Found", status_code=404)
     
-    favorite=Favorites(name=planet.name, user_id=user_id, planet_id=planet_id, category="Planet")
+    favorite=Favorites(name=planet.name, user_id=user.id, planet_id=planet_id, category="Planet")
     db.session.add(favorite)
     db.session.commit()
 
@@ -135,11 +145,19 @@ def add_fav_planet(planet_id):
 
 @app.route('/favorite/people/<int:people_id>', methods=['DELETE'])
 def delete_fav_character(people_id):
-    user_id=request.args.get("user_id")
-    if user_id is None:
-        raise APIException("Please provide User ID", status_code=404)
+    username=request.args.get("username")
+    password=request.args.get("password")
+    if username is None or password is None:
+        raise APIException("Please provide Username and Password", status_code=404)
     
-    favorite=Favorites.query.filter_by(user_id=user_id, character_id=people_id).first()
+    user=User.query.filter_by(username=username).first()
+    if user is None:
+        raise APIException("User not found", status_code=404)
+    
+    if user.password != password:
+        raise APIException("Password incorrect", status_code=404)
+    
+    favorite=Favorites.query.filter_by(user_id=user.id, character_id=people_id).first()
     if favorite is None:
         raise APIException("Person not found", status_code=404)
     db.session.delete(favorite)
@@ -149,11 +167,19 @@ def delete_fav_character(people_id):
 
 @app.route('/favorite/planet/<int:planet_id>', methods=['DELETE'])
 def delete_fav_planet(planet_id):
-    user_id=request.args.get("user_id")
-    if user_id is None:
-        raise APIException("Please provide User ID", status_code=404)
+    username=request.args.get("username")
+    password=request.args.get("password")
+    if username is None or password is None:
+        raise APIException("Please provide Username and Password", status_code=404)
     
-    favorite=Favorites.query.filter_by(user_id=user_id, planet_id=planet_id).first()
+    user=User.query.filter_by(username=username).first()
+    if user is None:
+        raise APIException("User not found", status_code=404)
+    
+    if user.password != password:
+        raise APIException("Password incorrect", status_code=404)
+    
+    favorite=Favorites.query.filter_by(user_id=user.id, planet_id=planet_id).first()
     if favorite is None:
         raise APIException("Planet not found", status_code=404)
     db.session.delete(favorite)
@@ -161,57 +187,7 @@ def delete_fav_planet(planet_id):
 
     return jsonify({"Message": "Favorite planet deleted successfully"}), 200
 
-# @app.route('/user', methods=['POST'])
-# def create_user():
-#     username = request.json["username"]
-#     password = request.json["password"]
 
-#     user1 = User(username=username, password=password)
-#     db.session.add(user1)
-#     db.session.commit()
-        
-#     response_body = {
-#     "msg": "Hello, created user " + username
-#     }
-#     return jsonify(response_body), 200
-
-# @app.route('/favorites', methods=['POST'])
-# def create_fav():
-        
-#     if request.json["category"] == "character":
-#         char = Character(
-#             name=request.json["name"],
-#             gender=request.json["gender"],
-#             birth_year=request.json["birth_year"],
-#             height=request.json["height"],
-#             mass=request.json["mass"]
-#         )
-
-#         fave = Favorites(
-#             name=request.json["name"],
-#             category=request.json["category"],
-#             user_id=request.json["user_id"],
-#             character_id=request.json["entity_id"]
-#         )
-#     elif request.json["category"] == "planet":
-#         planet = Planet(
-#             name=request.json["name"],
-#             climate=request.json["climate"],
-#             gravity=request.json["gravity"],
-#             population=request.json["population"],
-#             terrain=request.json["terrain"]
-#         )
-#         fave = Favorites(
-#             name=request.json["name"],
-#             category=request.json["category"],
-#             user_id=request.json["user_id"],
-#             planet_id=request.json["entity_id"]
-#         )
-
-    # db.session.add(user1)
-    # db.session.commit()
-
-    # return jsonify(response_body), 200
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
